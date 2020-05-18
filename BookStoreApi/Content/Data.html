@@ -1,0 +1,348 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Index</title>
+    <meta charset="utf-8" />
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!-- Popper JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"></script>
+
+    <style>
+        .table th, td {
+            text-align: center;
+        }
+    </style>
+</head>
+<!--//onClick="Update(' + value.ISBN + ')"-->
+<body style="padding:20px;" class="container">
+
+    <div class="input-group mb-3 well">
+        <div class="input-group-prepend">
+            <button id="btnLoadEmployees" class="btn btn-outline-secondary" type="button">Load Books</button>
+            <button id="btnAdd" class="btn btn-outline-secondary" type="button" data-toggle="modal" data-target="#myModal">Add Book</button>
+            <button id="btnLogoff" class="btn btn-outline-secondary" type="button">Sign Out</button>
+        </div>
+        <input type="text" class="form-control" placeholder="Search.." id="myInput" aria-label="" aria-describedby="basic-addon1">
+    </div>
+
+    <div id="StudentDetailsPanel"></div>
+    <div id="WaitDiv" style="display:none">Wait.....</div>
+
+    <div id="divData" class="well hidden">
+        <table class="table table-hover table-striped table-bordered" id="tblData">
+            <thead>
+                <tr>
+                    <th>Book ISBN</th>
+                    <th>Book Price</th>
+                    <th>Book Title</th>
+                    <th>Writing Year</th>
+                    <th>Publisher UserID</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody id="tblBody"></tbody>
+        </table>
+    </div>
+
+    <div class="modal fade" tabindex="-1" id="errorModal"
+         data-keyboard="false" data-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">
+                        &times;
+                    </button>
+                    <h4 class="modal-title">Session Expired</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <h2 class="modal-title">Close this message to login again</h2>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger"
+                            data-dismiss="modal">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="divError" class="alert alert-danger collapse">
+        <a id="linkClose" href="#" class="close">&times;</a>
+        <div id="divErrorText"></div>
+    </div>
+
+    <!-- The Modal -->
+    <div class="modal" id="myModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Add Book</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="ISBN">International Standard Book Number</label>
+                            <input type="text" class="form-control" placeholder="Enter ISBN" id="ISBN">
+                        </div>
+                        <div class="form-group">
+                            <label for="Price">Price:</label>
+                            <input type="number" class="form-control" placeholder="Enter Price" id="Price">
+                        </div>
+                        <div class="form-group">
+                            <label for="Title">Title :</label>
+                            <input type="text" class="form-control" placeholder="Enter Title" id="Title">
+                        </div>
+                        <div class="form-group">
+                            <label for="Year">Year :</label>
+                            <input type="number" class="form-control" placeholder="Enter Year of publishing" id="Year">
+                        </div>
+
+                        <button id="Save" type="submit" onclick="Add()" class="btn btn-primary">Add</button>
+                    </form>
+                </div>
+
+                <!-- Modal footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!--<script src="Scripts/jquery-1.10.2.min.js"></script>
+    <script src="Scripts/bootstrap.min.js"></script>-->
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if (sessionStorage.getItem('accessToken') == null) {
+                window.location.href = "Login.html";
+            }
+            $('#btnLogoff').val('Log Off From  ' + localStorage.getItem('userName'));
+            $('#linkClose').click(function () {
+                $('#divError').hide('fade');
+            });
+
+            $('#errorModal').on('hidden.bs.modal', function () {
+                window.location.href = "Login.html";
+            });
+
+            $('#btnLoadEmployees').click(function GetAll() {
+                $.ajax({
+                    url: '/api/Books',
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer '
+                            + sessionStorage.getItem("accessToken")
+                    },
+                    success: function (data) {
+                        $('#divData').removeClass('hidden');
+                        $('#tblBody').empty();
+                        $.each(data, function (index, value) {
+                            var row = $(
+                                '<tr><td>' + value.ISBN +
+                                '</td><td>' + value.Price +
+                                '</td><td>' + value.Title +
+                                '</td><td>' + value.Year +
+                                '</td><td>' + value.UserID +
+                                '</td><td>' + '<input id="Edit"  class="btn btn-outline-secondary" type="button"   value="Edit" data-toggle="modal" data-target="#myModal2" data-whatever="' + value.ISBN + '" />&nbsp; <input id="delete" onClick="DeleteBook(' + value.ISBN + ')" class="btn btn-outline-secondary" type="button" value="delete" />' +
+                                '</td></tr>');
+                            $('#tblData').append(row);
+
+                        });
+                    },
+                    error: function (jQXHR) {
+                        // If status code is 401, access token expired, so
+                        // redirect the user to the login page
+                        if (jQXHR.status == "401") {
+                            $('#errorModal').modal('show');
+                        }
+                        else {
+                            $('#divErrorText').text(jqXHR.responseText);
+                            $('#divError').show('fade');
+                        }
+                    }
+                });
+            });
+
+        });
+    </script>
+
+    <!--Edit Model-->
+    <div class="modal" id="myModal2">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header">
+                    <h4 class="modal-title">Edit Book</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <!-- Modal body -->
+                <div class="modal-body">
+                    <form>
+                        <div class="form-group">
+                            <label for="ISBN2">International Standard Book Number</label>
+                            <input type="text" class="form-control" placeholder="Enter ISBN" id="ISBN2" value="" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="Price2">Price:</label>
+                            <input type="number" class="form-control" placeholder="Enter Price" value="" id="Price2">
+                        </div>
+                        <div class="form-group">
+                            <label for="Title2">Title :</label>
+                            <input type="text" class="form-control" placeholder="Enter Title" id="Title2">
+                        </div>
+                        <div class="form-group">
+                            <label for="Year2">Year :</label>
+                            <input type="number" class="form-control" placeholder="Enter Year of publishing" id="Year2">
+                        </div>
+
+                        <button id="Save2" type="submit" onclick="Update();" class="btn btn-primary">EDIT</button>
+                    </form>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        $('#myModal2').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget) // Button that triggered the modal
+            var recipient = button.data('whatever') // Extract info from data-* attributes
+            var modal = $(this)
+            modal.find('#ISBN2').val(recipient)
+        })
+    </script>
+
+    <!--Get Books-->
+    <script>
+        $('#btnLogoff').click(function () {
+            sessionStorage.removeItem('accessToken');
+            window.location.href = "Login.html";
+        });
+    </script>
+
+    <!--Getete Book-->
+    <script>
+        function DeleteBook(ISBN) {
+            $.ajax({
+                url: '/api/Books?id=' + ISBN,
+                type: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '
+                        + sessionStorage.getItem("accessToken")
+                },
+                dataType: 'json',
+                data: { "id": "5" },
+                success: function (data, textStatus, xhr) {
+                    console.log(data);
+                    //alert("Ajax Delete ")
+                    $('#btnLoadEmployees').click();
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    console.log('Error in Operation');
+                }
+            });
+        }
+    </script>
+
+    <!--Add Book-->
+    <script>
+        function Add() {
+
+            var Book = new Object();
+            Book.ISBN = $('#ISBN').val();
+            Book.Price = $('#Price').val();
+            Book.Title = $('#Title').val();
+            Book.Year = $('#Year').val();
+            //alert(JSON.stringify(Book));
+            $.ajax({
+                url: '/api/Books',
+                type: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '
+                        + sessionStorage.getItem("accessToken")
+                },
+                dataType: 'json',
+                data: JSON.stringify(Book),
+                success: function (data, textStatus, xhr) {
+                    console.log(data);
+                    alert("Success");
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    console.log('Error in Operation');
+                    alert("ERRor ");
+                }
+            });
+        }
+
+    </script>
+
+    <!-- Edit Book-->
+    <script>
+
+        function Update() {
+            var Book = new Object();
+            Book.ISBN = $('#ISBN2').val();
+            Book.Price = $('#Price2').val();
+            Book.Title = $('#Title2').val();
+            Book.Year = $('#Year2').val();
+
+            //alert(JSON.stringify(Book));
+            $.ajax({
+                url: '/api/Books/' + $('#ISBN2').val(),
+                type: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer '
+                        + sessionStorage.getItem("accessToken")
+                },
+                dataType: 'json',
+                data: JSON.stringify(Book),
+                success: function (data, textStatus, xhr) {
+                    console.log(data);
+                    alert("Success");
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    console.log('Error in Operation');
+                    alert("ERRor ");
+                }
+            });
+        }
+
+    </script>
+
+    <!--Search-->
+    <script>
+        $(document).ready(function () {
+            $("#myInput").on("keyup", function () {
+                var value = $(this).val().toLowerCase();
+                $("#tblBody tr").filter(function () {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+        });
+    </script>
+</body>
